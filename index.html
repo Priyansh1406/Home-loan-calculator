@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home Loan Calculator</title>
+    <style>
+        .head{
+            width: 600px;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        .field{
+            margin-bottom: 10px;
+            
+        }
+        .field label{
+            display: inline-block;
+            width: 200px;
+        }
+        .btn{
+            width: 80px;
+            height: 30px;
+            margin: 2px;
+        }
+        .result{
+            display: block;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- <script src="calculator.js"></script> -->
+</head>
+<body>
+    <div class="head">
+        <h2>Loan Details</h2>
+        <div class="field">
+            <h4>Repayment type</h4>
+            <label>
+                <input type="radio" name="ownership" id="radioButton1" value="Yes"> Principal and interest
+                <br>
+                <input type="radio" name="ownership" id="radioButton2" value="No"> Interest only
+            </label>
+        </div>
+        <div class="field InterestOnlyShow">
+            <label for="interestOnlyPeriod">Interest only period:</label>
+            <select name="interestOnlyPeriod" id="interestOnlyPeriod">
+            <option value="1">1 years</option>
+            <option value="2">2 years</option>
+            <option value="3">3 years</option>
+            <option value="4">4 years</option>
+            <option value="5">5 years</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="propertyValue">Loan amount:</label>
+            <input type="text" id="propertyValue" oninput="formatNumberInput(this)" data-format="number">
+        </div>
+        <div class="field">
+            <label for="interestRate">Interest rate:</label>
+            <input type="text" id="interestRate" oninput="formatNumberInput(this)" data-format="number">
+        </div>
+        <div class="field">
+            <label for="repaymentType">Repayment frequency:</label>
+
+            <select name="repaymentType" id="repaymentType">
+            <option value="monthly">Monthly</option>
+            <option value="fortnightly">Fortnightly</option>
+            <option value="weekly">Weekly</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="loanTerm">Loan term:</label>
+
+            <select name="loanTerm" id="loanTerm">
+            <option value="30">30 years</option>
+            <option value="29">29 years</option>
+            <option value="28">28 years</option>
+            <option value="27">27 years</option>
+            <option value="26">26 years</option>
+            <option value="25">25 years</option>
+            <option value="24">24 years</option>
+            <option value="23">23 years</option>
+            <option value="22">22 years</option>
+            <option value="21">21 years</option>
+            <option value="20">20 years</option>
+            <option value="19">19 years</option>
+            <option value="18">18 years</option>
+            <option value="17">17 years</option>
+            <option value="16">16 years</option>
+            <option value="15">15 years</option>
+            <option value="14">14 years</option>
+            <option value="13">13 years</option>
+            <option value="12">12 years</option>
+            <option value="11">11 years</option>
+            <option value="10">10 years</option>
+            <option value="9">9 years</option>
+            <option value="8">8 years</option>
+            <option value="7">7 years</option>
+            <option value="6">6 years</option>
+            <option value="5">5 years</option>
+            <option value="4">4 years</option>
+            <option value="3">3 years</option>
+            <option value="2">2 years</option>
+            <option value="1">1 years</option>
+            </select>
+        </div>
+        
+        <div class="result">
+            <h2>Your Estimated Results:</h2>
+            <div id="monthlyRepaymentResult" class="monthlyRepaymentResult"></div>
+            <div id="fortnightlyRepaymentResult" class="fortnightlyRepaymentResult"></div>
+            <div id="weeklyRepaymentResult" class="weeklyRepaymentResult"></div>
+            <div id="totalInterestPaidResult"></div>
+            <div id="totalRepaymentAmountResult"></div>
+        </div>
+    </div>
+    <br>
+    <div class="head">
+        <h2>What if i want to make extra repayments?</h2>
+        <div class="field">
+            <label for="extraRepayment">Extra repayment:</label>
+            <input type="text" id="extraRepayment" oninput="formatNumberInput(this)" data-format="number">
+        </div>
+        <div class="field">
+            <label for="extraRepaymentFrequency">Extra repayment frequency:</label>
+
+            <select name="extraRepaymentFrequency" id="extraRepaymentFrequency">
+            <option value="monthly">Monthly</option>
+            <option value="fortnightly">Fortnightly</option>
+            <option value="weekly">Weekly</option>
+            </select>
+        </div>
+        
+        <div class="result">
+            <h2>Your Estimated Results:</h2>
+            <div id="totalInterestChargeResult"></div>
+            <div id="reducedLoanTermResult"></div>
+            <div id="updatedLoanTermResult"></div>
+        </div>
+    </div>
+<script>
+    let varRadioSelect = document.getElementById("radioButton1");
+    varRadioSelect.checked = true;
+
+    $(".InterestOnlyShow").hide();
+
+    $(document).ready(function () {
+        $("input[name='ownership']").change(function () {
+            var optionValue = $(this).val();
+            if (optionValue === "No") {
+                $(".InterestOnlyShow").show();
+            }else if(optionValue === "Yes"){
+                $(".InterestOnlyShow").hide();
+            }else{
+                $(".InterestOnlyShow").hide();
+            }
+        });
+    });
+
+    function calculateLoan() {
+
+        const propertyValue = parseFloat(removeCommas(document.getElementById("propertyValue").value)) || 0;
+        const interestRate = parseFloat((removeCommas(document.getElementById("interestRate").value)) / 100) || 0;
+        const loanTerm = parseFloat(document.getElementById("loanTerm").value) || 0;
+        const repaymentType = document.getElementById("repaymentType").value || 0;
+        const interestOnlyType = document.getElementById("radioButton2").checked; // Use 'checked' instead of 'value'
+        const interestOnlyPeriod = parseFloat(document.getElementById("interestOnlyPeriod").value);
+        const principalInterestType = document.getElementById("radioButton1").checked; // Use 'checked' instead of 'value'
+
+        const loanAmount = propertyValue;
+        const monthlyInterestRate = interestRate / 12;
+        const fortnightlyInterestRate = interestRate / 26;
+        const weeklyInterestRate = interestRate / 52;
+
+        let monthlyRepayment = 0;
+        let fortnightlyRepayment = 0;
+        let weeklyRepayment = 0;
+        let interestOnlyRepayment = 0;
+        let totalInterestPaid = 0;
+        let totalRepaymentAmount = 0;
+        let totalInterestPaidInterestOnly = 0;
+        let totalRepaymentAmountInterestOnly = 0;
+
+        document.getElementById("monthlyRepaymentResult").style.display = "none";
+        document.getElementById("fortnightlyRepaymentResult").style.display = "none";
+        document.getElementById("weeklyRepaymentResult").style.display = "none";
+
+        if (principalInterestType) {
+            // Calculate repayments based on repaymentType
+
+            if (repaymentType === 'monthly') {
+            document.getElementById("monthlyRepaymentResult").style.display = "block";
+            } else if (repaymentType === 'fortnightly') {
+                document.getElementById("fortnightlyRepaymentResult").style.display = "block";
+            } else if (repaymentType === 'weekly') {
+                document.getElementById("weeklyRepaymentResult").style.display = "block";
+            }
+
+            if (repaymentType === 'monthly') {
+                monthlyRepayment = (loanAmount * monthlyInterestRate) / (1 - Math.pow(1 + monthlyInterestRate, -loanTerm * 12));
+            } else if (repaymentType === 'fortnightly') {
+                fortnightlyRepayment = (loanAmount * (fortnightlyInterestRate)) / (1 - Math.pow(1 + (fortnightlyInterestRate ), -loanTerm * 26));
+            } else if (repaymentType === 'weekly') {
+                weeklyRepayment = (loanAmount * (weeklyInterestRate )) / (1 - Math.pow(1 + (weeklyInterestRate ), -loanTerm * 52));
+            }
+
+            // Calculate total interest and total repayment amount
+                if (repaymentType === 'monthly') {
+                    totalInterestPaid = (monthlyRepayment * loanTerm * 12) - loanAmount;
+                    totalRepaymentAmount = monthlyRepayment * loanTerm * 12;
+                } else if (repaymentType === 'fortnightly') {
+                    totalInterestPaid = (fortnightlyRepayment * loanTerm * 26) - loanAmount;
+                    totalRepaymentAmount = fortnightlyRepayment * loanTerm * 26;
+                } else if (repaymentType === 'weekly') {
+                    totalInterestPaid = (weeklyRepayment * loanTerm * 52) - loanAmount;
+                    totalRepaymentAmount = weeklyRepayment * loanTerm * 52;
+                }
+        }
+
+        if (interestOnlyType) {
+
+            if (repaymentType === 'monthly') {
+            document.getElementById("monthlyRepaymentResult").style.display = "block";
+            } else if (repaymentType === 'fortnightly') {
+                document.getElementById("fortnightlyRepaymentResult").style.display = "block";
+            } else if (repaymentType === 'weekly') {
+                document.getElementById("weeklyRepaymentResult").style.display = "block";
+            }
+
+            // Calculate interest only repayment based on repaymentType
+            if (repaymentType === 'monthly') {
+                monthlyRepayment = loanAmount * monthlyInterestRate;
+            } else if (repaymentType === 'fortnightly') {
+                fortnightlyRepayment = loanAmount * fortnightlyInterestRate;
+            } else if (repaymentType === 'weekly') {
+                weeklyRepayment = loanAmount * weeklyInterestRate;
+            }
+
+            for(let i=1;i<=5;i++){
+                if(interestOnlyPeriod === i){
+                    if (repaymentType === 'monthly') {
+                        monthlyRepaymentInterest = loanAmount * monthlyInterestRate;
+                        monthlyRepaymentPrincipal = (loanAmount * monthlyInterestRate) / (1 - Math.pow(1 + monthlyInterestRate, (-loanTerm -(-i)) * 12));
+                        // console.log(monthlyRepaymentPrincipal);
+                        totalInterestPaid = ((monthlyRepaymentPrincipal*12) * (loanTerm-i) + ((monthlyRepaymentInterest*12)*i)-loanAmount);
+                        totalRepaymentAmount = loanAmount + totalInterestPaid;
+                    } else if (repaymentType === 'fortnightly') {
+                        fortnightlyRepaymentInterest = loanAmount * fortnightlyInterestRate;
+                        fortnightlyRepaymentPrincipal = (loanAmount * fortnightlyInterestRate) / (1 - Math.pow(1 + fortnightlyInterestRate, (-loanTerm -(-i)) * 26));
+                        // console.log(fortnightlyRepaymentPrincipal);
+                        totalInterestPaid = ((fortnightlyRepaymentPrincipal*26) * (loanTerm-i) + ((fortnightlyRepaymentInterest*26)*i)-loanAmount);
+                        totalRepaymentAmount = loanAmount + totalInterestPaid;
+                    } else if (repaymentType === 'weekly') {
+                        weeklyRepaymentInterest = loanAmount * weeklyInterestRate;
+                        weeklyRepaymentPrincipal = (loanAmount * weeklyInterestRate) / (1 - Math.pow(1 + weeklyInterestRate, (-loanTerm -(-i)) * 52));
+                        // console.log(weeklyRepaymentPrincipal);
+                        totalInterestPaid = ((weeklyRepaymentPrincipal*52) * (loanTerm-i) + ((weeklyRepaymentInterest*52)*i)-loanAmount);
+                        totalRepaymentAmount = loanAmount + totalInterestPaid;
+                    }
+                }
+            }
+        }
+        // Display results
+        document.getElementById("monthlyRepaymentResult").textContent = `Monthly Repayment: $${addCommas(isNaN(monthlyRepayment) ? 0 : monthlyRepayment.toFixed(0))}`;
+        document.getElementById("fortnightlyRepaymentResult").textContent = `Fortnightly Repayment: $${addCommas(isNaN(fortnightlyRepayment) ? 0 : fortnightlyRepayment.toFixed(0))}`;
+        document.getElementById("weeklyRepaymentResult").textContent = `Weekly Repayment: $${addCommas(isNaN(weeklyRepayment) ? 0 : weeklyRepayment.toFixed(0))}`;
+        document.getElementById("totalInterestPaidResult").textContent = `Total Interest on loan: $${addCommas(isNaN(totalInterestPaid) ? 0 : totalInterestPaid.toFixed(0))}`;
+        document.getElementById("totalRepaymentAmountResult").textContent = `Total Loan Amount : $${addCommas(isNaN(totalRepaymentAmount) ? 0 : totalRepaymentAmount.toFixed(0))}`;
+
+
+    }
+
+    function calculateExtraRepayment(){
+
+        const propertyValue = parseFloat(removeCommas(document.getElementById("propertyValue").value)) || 0;
+        const interestRate = parseFloat((removeCommas(document.getElementById("interestRate").value)) / 100) || 0;
+        const loanTerm = parseFloat(document.getElementById("loanTerm").value) || 0;
+        const repaymentType = document.getElementById("repaymentType").value;
+        const interestOnlyType = document.getElementById("radioButton2").checked; 
+        const interestOnlyPeriod = parseFloat(document.getElementById("interestOnlyPeriod").value);
+        const principalInterestType = document.getElementById("radioButton1").checked; 
+        const extraRepayment = parseFloat(removeCommas(document.getElementById("extraRepayment").value)) || 0;
+        const extraRepaymentFrequency = document.getElementById("extraRepaymentFrequency").value;
+
+        const loanAmount = propertyValue;
+        const monthlyInterestRate = interestRate / 12;
+        const fortnightlyInterestRate = interestRate / 26;
+        const weeklyInterestRate = interestRate / 52;
+        const monthlyRepaymentInterest = loanAmount * monthlyInterestRate;
+    
+        let totalInterestCharge = 0;
+        let reducedLoanTerm = 0;
+        let updatedLoanTerm=0;
+        let updatedEMI=0;
+        let principal=0;
+        let updatedLoanBalance=0;
+        let cumulativeInterest =0;
+
+        function calculateActualPayments(principal, interestRateFrequency, EMI, extraPayment) {
+
+                let numberOfPayments = 0;
+                let monthlyInterest;
+                let principalPayment;
+
+                while (principal > 0) {
+                    monthlyInterest = principal * interestRateFrequency;
+                    principalPayment = EMI - monthlyInterest;
+                    principal -= principalPayment;
+                    principal -= extraPayment;
+                    numberOfPayments++;
+
+                    if (principalPayment + extraPayment <= 0) {
+                        console.error("Loan will never be paid off with these parameters.");
+                        return -1; 
+                    }
+                }
+                return numberOfPayments;
+            }
+
+        
+        if(extraRepaymentFrequency === 'monthly'){
+            EMI = (loanAmount * monthlyInterestRate) / (1 - Math.pow(1 + monthlyInterestRate, -loanTerm * 12));
+            updatedEMI = EMI + extraRepayment;
+            updatedLoanBalance = loanAmount;
+
+            let actualPayments = calculateActualPayments(loanAmount, interestRate/12, EMI, extraRepayment);
+
+            for(let i=1;i<=actualPayments;i++){
+                updatedLoanBalance = updatedLoanBalance - principal;
+                monthlyInterest = updatedLoanBalance * monthlyInterestRate;
+                principal = updatedEMI - monthlyInterest;
+                cumulativeInterest = cumulativeInterest + monthlyInterest;
+                console.log('Cumulative Interest',cumulativeInterest)
+            }
+            totalInterestCharge = cumulativeInterest;
+
+            reducedLoanTerm = ((loanTerm*12) - actualPayments)/12;
+            updatedLoanTerm = loanTerm - reducedLoanTerm;
+        }
+        else if(extraRepaymentFrequency === 'fortnightly'){
+            EMI = (loanAmount * fortnightlyInterestRate) / (1 - Math.pow(1 + fortnightlyInterestRate, -loanTerm * 26));
+            updatedEMI = EMI + extraRepayment;
+            updatedLoanBalance = loanAmount;
+
+            let actualPayments = calculateActualPayments(loanAmount, interestRate/26, EMI, extraRepayment);
+        
+            for(let i=1;i<=actualPayments;i++){
+                updatedLoanBalance = updatedLoanBalance - principal;
+                fortnightlyInterest = updatedLoanBalance * fortnightlyInterestRate;
+                principal = updatedEMI - fortnightlyInterest;
+                cumulativeInterest = cumulativeInterest + fortnightlyInterest;
+                console.log('Cumulative Interest',cumulativeInterest)
+            }
+            totalInterestCharge = cumulativeInterest;
+            reducedLoanTerm = ((loanTerm*26) - actualPayments)/26;
+            updatedLoanTerm = loanTerm - reducedLoanTerm;
+
+        }
+        else if(extraRepaymentFrequency === 'weekly'){
+            EMI = (loanAmount * weeklyInterestRate) / (1 - Math.pow(1 + weeklyInterestRate, -loanTerm * 52));
+            updatedEMI = EMI + extraRepayment;
+            updatedLoanBalance = loanAmount;
+
+            let actualPayments = calculateActualPayments(loanAmount, interestRate/52, EMI, extraRepayment);
+            
+            for(let i=1;i<=actualPayments;i++){
+                updatedLoanBalance = updatedLoanBalance - principal;
+                weeklyInterest = updatedLoanBalance * weeklyInterestRate;
+                principal = updatedEMI - weeklyInterest;
+                cumulativeInterest = cumulativeInterest + weeklyInterest;
+                console.log('Cumulative Interest',cumulativeInterest)
+            }
+            totalInterestCharge = cumulativeInterest;
+            reducedLoanTerm = ((loanTerm*52) - actualPayments)/52;
+            updatedLoanTerm = loanTerm - reducedLoanTerm;
+        }
+
+        const yearsReduced = Math.floor(reducedLoanTerm);
+        const monthsReduced = Math.round((reducedLoanTerm - yearsReduced) * 12);
+        const yearsUpdated = Math.floor(updatedLoanTerm);
+        const monthsUpdated = Math.round((updatedLoanTerm - yearsUpdated) * 12);
+
+        // Format the loan term display
+        const formattedReducedLoanTerm = yearsReduced > 0 ? yearsReduced + (yearsReduced === 1 ? ' year' : ' years') : '';
+        const formattedReducedMonths = monthsReduced > 0 ? monthsReduced + (monthsReduced === 1 ? ' month' : ' months') : '';
+        const formattedUpdatedLoanTerm = yearsUpdated > 0 ? yearsUpdated + (yearsUpdated === 1 ? ' year' : ' years') : '';
+        const formattedUpdatedMonths = monthsUpdated > 0 ? monthsUpdated + (monthsUpdated === 1 ? ' month' : ' months') : '';
+
+        // Combine the formatted years and months
+        reducedLoanTermResult = formattedReducedLoanTerm && formattedReducedMonths ? `${formattedReducedLoanTerm} and ${formattedReducedMonths}` : formattedReducedLoanTerm || formattedReducedMonths;
+        updatedLoanTermResult = formattedUpdatedLoanTerm && formattedUpdatedMonths ? `${formattedUpdatedLoanTerm} and ${formattedUpdatedMonths}` : formattedUpdatedLoanTerm || formattedUpdatedMonths;
+
+        // Display the formatted result
+       
+
+        document.getElementById("totalInterestChargeResult").textContent = `Total Interest charged: $${addCommas(isNaN(totalInterestCharge) ? 0 : totalInterestCharge.toFixed(0))}`;
+        document.getElementById("reducedLoanTermResult").textContent = `Reduced Loan term: ${reducedLoanTermResult}`;
+        document.getElementById("updatedLoanTermResult").textContent = `Loan term: ${updatedLoanTermResult}`;
+
+    }
+
+    function removeCommas(number) {
+        return number.replace(/,/g, "");
+    }
+
+    function addCommas(number) {
+        return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function formatNumberInput(input) {
+        const value = removeCommas(input.value);
+        const formattedValue = addCommas(value);
+        input.value = formattedValue;
+    }
+
+    repaymentType.addEventListener("change", () => {
+        calculateLoan();
+    });
+
+    loanTerm.addEventListener("change", () => {
+        calculateLoan();
+    });
+
+    interestOnlyPeriod.addEventListener("change", () => {
+        calculateLoan();
+    })
+
+    extraRepaymentFrequency.addEventListener("change", () =>{
+        calculateExtraRepayment();
+    })
+
+    const inputFields = document.querySelectorAll('input[data-format="number"]');
+    inputFields.forEach((input) => {
+    input.addEventListener('input', () => {
+        formatNumberInput(input);
+        calculateLoan();
+        calculateExtraRepayment();
+    });
+    });
+
+    calculateLoan();
+    calculateExtraRepayment();
+
+</script>
+    
+</body>
+</html>
